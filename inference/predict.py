@@ -8,7 +8,9 @@ tokenizer = AutoTokenizer.from_pretrained("facebook/bart-large-mnli")
 
 
 def predict(data):
+    """
 
+    """
     input_text = data["context"]  # load text to classify
     candidate_labels = data["labels"]  # load labels
     candidate_labels = list(candidate_labels)
