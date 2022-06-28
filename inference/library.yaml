@@ -1,0 +1,37 @@
+---
+title: Inference
+version: 1.0.0
+description: "Library to deploy the Document classifier capable of returning probabilities for each each for each each document."
+icon: python
+
+author: "cnvrg"
+author_email: "libhub@cnvrg.io"
+
+tags:
+  - inference
+
+kind: webservice
+
+command: python3 predict.py
+
+requirements:
+  cpu: 3.5
+  memory: 8
+  gpu: 0
+  hpu: 0
+
+image: cnvrg:v5.0
+
+language: python3
+
+arguments:
+  accept_files: false
+  file_name: predict.py
+  function_name: predict
+  prep_file: ''
+  prep_function: ''
+  input_example:
+    context: text
+  input_schema:
+    context: text
+  output_schema: {}
