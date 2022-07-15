@@ -1,7 +1,7 @@
 ---
 title: DC-Inference
 version: 1.0.0
-description: "Library to deploy the Document classification capable of assigning probablities to custom label for each document."
+description: "Library to deploy the Document classification."
 long_description: "Library to deploy the Document classification capable of assigning probablities to custom label for each document."
 author: "cnvrg"
 author_email: "libhub@cnvrg.io"
@@ -18,7 +18,7 @@ tasks:
 
     type: deploy
 
-    library: inference
+    library: dcinference
     library_version: 1.0.0
 
     kind: webservice
