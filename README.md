@@ -6,3 +6,23 @@ You can deploy the Document classification model to use it via API calls. Once d
 4. You can now use the `Try it Live` section with any text or link. 
 5. You can now integrate your API with your code using the integration panel at the bottom of the page
 6. You will now have a functioning API endpoint that returns the probabilites for each label for the input text!
+
+## Example Input
+Text:   
+```
+I love making new dishes for my family.
+```  
+Labels: 
+```
+Cooking,Dancing
+```
+
+
+## Example Output
+
+```
+{
+  "cooking": "0.9635761380195618",
+  "flying": "0.0028416530694812536"
+}
+```
