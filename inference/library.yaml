@@ -1,7 +1,7 @@
 ---
 title: dcInference
 version: 1.0.0
-description: "Library to deploy the Document classifier capable of returning probabilities for each each for each each document."
+description: "Document classifier capable of returning probabilities for each each for each each document."
 icon: python
 
 author: "cnvrg"
@@ -20,12 +20,15 @@ requirements:
   gpu: 0
   hpu: 0
 
-image: cnvrg:v5.0
+image: cnvrg/cnvrg:v5.0
 
 language: python3
 
 arguments:
   accept_files: false
+  gunicorn_config:
+    - key: workers
+      value: '1'
   file_name: predict.py
   function_name: predict
   prep_file: ''
@@ -34,4 +37,5 @@ arguments:
     context: text
   input_schema:
     context: text
+    labels: text
   output_schema: {}

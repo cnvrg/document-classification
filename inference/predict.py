@@ -10,8 +10,13 @@ tokenizer = AutoTokenizer.from_pretrained("facebook/bart-large-mnli")
 def predict(data):
 
     input_text = data["context"]  # load text to classify
-    candidate_labels = data["labels"]  # load labels
-    candidate_labels = list(candidate_labels)
+    if isinstance(data["labels"], str):
+        candidate_labels = data["labels"].split(",")
+    else:
+        candidate_labels = data["labels"]
+
+    # load labels
+    #candidate_labels = list(candidate_labels)
     if input_text[-1] != ".":
         input_text += "."
     encoded_input = tokenizer(
