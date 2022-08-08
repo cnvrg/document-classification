@@ -1,5 +1,5 @@
 ---
-title: dcInference
+title: Document Classification Inference
 version: 1.0.0
 description: "Document classifier capable of returning probabilities for each each for each each document."
 icon: python
