@@ -1,8 +1,8 @@
 ---
-title: Document Classification Inference
+title: Document Classification
 version: 1.0.0
 description: "Library to deploy the Document classification."
-long_description: "Document classification capable of assigning probablities to custom label for each document."
+long_description: "Document classification capable of assigning probabilities to custom label for each document."
 author: "cnvrg"
 author_email: "libhub@cnvrg.io"
 
@@ -18,7 +18,7 @@ tasks:
 
     type: deploy
 
-    library: document-classification-inference
+    library: document-classification
     library_version: 1.0.0
 
     kind: webservice
