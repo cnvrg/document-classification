@@ -27,8 +27,8 @@ arguments:
   - key: 'dir'
     type: 'categorical'
     values:
-      - '/data/pdfs/'
+      - '/input/s3_connector/dc_classification_data/'
   - key: 'labels'
     type: 'categorical'
     values:
-      - 'one,two'
+      - 'technology,cooking'

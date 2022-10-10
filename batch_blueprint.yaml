@@ -1,5 +1,5 @@
 ---
-title: Document Batch
+title: Document Classification Batch
 version: 1.0.0
 description: "Classify text from the pdfs, .txt, .docx, .doc in the given directory"
 long_description: "Classify text from the pdfs, .txt, .docx, .doc in the given directory and store it in a csv format."
@@ -53,9 +53,9 @@ tasks:
       - key: prefix
         type: 'categorical'
         values:
-          - 'text_detection_batch_data/'
+          - 'dc_classification_data/'
           
-  - title: Batch Inference
+  - title: Batch
     top: 100
     left: 500
 
@@ -75,19 +75,19 @@ tasks:
       gpu: 0
       hpu: 0
 
-    image: python:3.8.6
+    image: cnvrg/cnvrg:v5.0
     language: python3
 
     params:
       - key: 'dir'
         type: 'categorical'
         values:
-          - "/data/pdfs"
+          - '/input/s3_connector/dc_classification_data/'
       - key: 'labels'
         type: 'categorical'
         values:
-          - "/data/pdf2"
+          - 'technology,cooking'
 
 relations:
     - from: S3 Connector
-      to: Batch Inference
+      to: Batch

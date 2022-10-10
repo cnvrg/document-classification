@@ -35,11 +35,18 @@ main
 ## Input Args
 
 `--dir` : The path to the folder containing all folders inside which the targe files are stored.
-`--labels` : The target labels provided as comma separate values without any space (For example label1,labe2)
+
+`--labels` : The target labels provided as comma separate values without any space. Please note the labels have to be provided in quotes. (For example "label1,labe2")
 
 ## Input Command
+```
+cnvrg run  --datasets='[{id:{dataset_id},commit:{dataset_commit_id}]' --machine="{compute_size} --image=python:3.8.6 --sync_before=false python3 batch_predict.py --dir {path_to_dir} --labels {labels}
+```
 
 ## Sample Input Command
+```
+cnvrg run  --datasets='[{id:"pdf2",commit:"827bfc458708f0b442009c9c9836f7e4b65557fb"}]' --machine="AWS-ON-DEMAND.xlarge-memory,AWS-SPOT.gpu-large,AWS-SPOT.gpu" --image=python:3.8.6 --sync_before=false python3 batch_predict.py --dir /data/pdf2 --labels "medicine,cooking"
+```
 
 ## Sample Output
 
