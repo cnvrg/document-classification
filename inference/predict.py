@@ -1,64 +1,152 @@
-import numpy as np
-from transformers import pipeline
-from transformers import AutoTokenizer
 import os
-os.environ["TOKENIZERS_PARALLELISM"] = "false"
-np.set_printoptions(suppress=True)
+import numpy as np
+import torch
+from transformers import DistilBertTokenizer, DistilBertModel
+import json
+from transformers import pipeline, AutoModelForSequenceClassification, AutoTokenizer
+import sys
+import pathlib
+sys.path.append(str(pathlib.Path(__file__).parent.resolve()))
+from breakup import breaker
+from bert_model import BERT_Arch
+from link_file import extract_data
+import base64
+from extractor import text_extraction
+import magic
 
-classifier = pipeline("zero-shot-classification", model="facebook/bart-large-mnli")
-tokenizer = AutoTokenizer.from_pretrained("facebook/bart-large-mnli")
+class setup_model:
+    def __init__(self):
+        
+        self.extracting = text_extraction()
+        if torch.cuda.is_available():
+            self.device = torch.device("gpu")
+        else:
+            self.device = torch.device("cpu")
+
+        if os.path.exists("/input/train"):
+            model_path = "/input/train/model.pt"
+            intents_path = "/input/train/classes.json"
+            model_path = "../model.pt"
+            intents_path = "../classes.json"
+            f = open(intents_path)
+            self.intents = json.load(f)
+            number_of_labels = len(self.intents)
+            # Import the DistilBert pretrained model
+            self.model = BERT_Arch(
+                DistilBertModel.from_pretrained("distilbert-base-uncased"),
+                number_of_labels,
+            )
+            self.tokenizer = DistilBertTokenizer.from_pretrained(
+                "distilbert-base-uncased"
+            )
+            self.model.load_state_dict(torch.load(model_path))
+            self.predict = self.trained_predictor
+
+        else:
+            os.environ["TOKENIZERS_PARALLELISM"] = "false"
+            np.set_printoptions(suppress=True)
+            nli_model = AutoModelForSequenceClassification.from_pretrained('facebook/bart-large-mnli')
+            tokenizer = AutoTokenizer.from_pretrained('facebook/bart-large-mnli')
+            if torch.cuda.is_available():
+                self.pipe = pipeline(task='zero-shot-classification', 
+                                     tokenizer=tokenizer, model=nli_model, 
+                                     device=0)
+            else:
+                self.pipe = pipeline(task='zero-shot-classification', 
+                                     tokenizer=tokenizer, model=nli_model)
+            self.predict = self.predefined_predict
+            self.breakup = breaker()
+
+    def predefined_predict(self, data):
+        if self.isBase64(data['context']):
+            decoded = base64.b64decode(data['context'])
+            file_ext = magic.from_buffer(decoded, mime=True).split("/")[-1]
+            savepath = f"file.{file_ext}"  # decode the input file
+            f = open(savepath, "wb")
+            f.write(decoded)
+            f.close()
+            sequences = self.extracting.master_extractor(savepath)
+            print(sequences)
+        else:
+            try:
+                sequences = extract_data(data["context"])
+            except:
+                sequences = data["context"] 
+        print(sequences)
+        process = self.breakup.breakup(sequences)
+        
+        if isinstance(data["labels"], str):
+            candidate_labels = data["labels"].split(",")
+        else:
+            candidate_labels = data["labels"]
+        arr = np.zeros((len(candidate_labels)))
+        total = 0
+        for textblock in process:
+            if(len(textblock)) == 0:
+                continue
+            ans = self.pipe(sequences=sequences, 
+                            candidate_labels=candidate_labels, 
+                            multi_label=False)
+            arr += ans["scores"]
+            total += 1
+        arr = arr / total
+        dict1 = {}
+        for prob, label in zip(arr, ans['labels']):
+            dict1[label] = str(format(prob,"f"))
+        # average score across all chunks for all labels
+        return dict1
+
+    def get_prediction(self, text):
+
+        test_text = [text]
+        self.model.eval()
+
+        tokens_test_data = self.tokenizer(
+            test_text,
+            max_length=8,
+            padding="max_length",
+            truncation=True,
+            return_token_type_ids=False,
+        )
+        test_seq = torch.tensor(tokens_test_data["input_ids"])
+        test_mask = torch.tensor(tokens_test_data["attention_mask"])
+        with torch.no_grad():
+            preds = self.model(test_seq.to(self.device), test_mask.to(self.device))
+        sm = torch.nn.Softmax(dim=1)
+        probabilities = sm(preds)
+        confidence = probabilities.detach().cpu().numpy()[0]
+        dict1 = {}
+        for prob, label in zip(confidence, self.intents):
+            dict1[label] = str(format(prob,"f"))
+        return dict1
+
+    def trained_predictor(self, data):
+        #check whether data is a base64 string, if yes decode it, else continue with normal 
+        if self.isBase64(data['context']):
+            decoded = base64.b64decode(data['context'])
+            file_ext = magic.from_buffer(decoded, mime=True).split("/")[-1]
+            savepath = f"file.{file_ext}"  # decode the input file
+            f = open(savepath, "wb")
+            f.write(decoded)
+            f.close()
+            message = self.extracting.master_extractor(savepath)
+        else:
+            message = data["context"]
+            try:
+                message = extract_data(data["context"])
+            except:
+                message = data["context"]
+        return self.get_prediction(message)
+
+    def isBase64(self, string):
+        try:
+            return base64.b64encode(base64.b64decode(string)).decode("utf-8") == string
+        except Exception:
+            return False
+
+predictor = setup_model()
 
 
 def predict(data):
-
-    input_text = data["context"]  # load text to classify
-    if isinstance(data["labels"], str):
-        candidate_labels = data["labels"].split(",")
-    else:
-        candidate_labels = data["labels"]
-
-    # load labels
-    #candidate_labels = list(candidate_labels)
-    if input_text[-1] != ".":
-        input_text += "."
-    encoded_input = tokenizer(
-        input_text
-    )  # encode the entire text to get the total token size
-    process = []
-    to_loop = (
-        len(encoded_input["input_ids"]) // 1024 + 1
-    )  # check the number of chunks we can make of 1024 token size
-    # break data into multiple strings so that length after tokenizing doesn't exceed 1024.
-    for i in range(to_loop):
-        breakup = tokenizer.decode(
-            encoded_input["input_ids"][:1024], skip_special_tokens=True
-        )
-        end_sentence = breakup.rfind(
-            "."
-        )  # find the last full stop in the text to find the end of the last complete sentence
-        if end_sentence != -1:
-            process.append(
-                breakup[0 : end_sentence + 1]
-            )  # break the raw text at the last complete sentence and add it to the list
-            input_text = input_text[end_sentence + 1 :]  # take the remaining raw text
-            encoded_input = tokenizer(input_text)  # convert it into tokens again
-        else:
-            process.append(
-                breakup
-            )  # if full stop not found add the entire text to the list
-            input_text = input_text[1024:]  # take the remaining raw text
-            encoded_input = tokenizer(input_text)  # convert it into tokens again
-    arr = np.zeros((len(candidate_labels)))
-    total = 0
-    for textblock in process:
-        if len(textblock) == 0:
-            continue
-        ans = classifier(textblock, candidate_labels)
-        arr += ans["scores"]
-        total += 1
-    arr = arr / total
-    dict1={}
-    for prob,label in zip(arr,candidate_labels):
-        dict1[label]=str(prob)
-    # average score across all chunks for all labels
-    return dict1
+    result = predictor.predict(data)
+    return result

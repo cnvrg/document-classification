@@ -11,32 +11,18 @@ The method works by posing the sequence to be classified as the NLI premise and 
 *Please note that the files which are not supported will have empty values for probabilities for each label in the csv against their names.*
 
 ### The input directory structure looks like below
-The user will provide the path to folder main which can contain multiple folder inside and each of these folders will have the targe files.
-```
-main
-    |
-    folder 1
-        |
-        file1
-        file2
-        ..
-    folder 2
-        |
-        file 3
-        file 4
-        ..
-    folder 3
-        |
-        file 5
-        file 6
-        ..
-    ..
-```
+The user will provide the path to folder main which can contain multiple folders or files and all the files located inside all the subfolders will be processed.
+
 ## Input Args
 
 `--dir` : The path to the folder containing all folders inside which the targe files are stored.
 
-`--labels` : The target labels provided as comma separate values without any space. Please note the labels have to be provided in quotes. (For example "label1,labe2")
+`--labels` : The target labels you want to associate your document with. Provide them as: "label1,label2, ... labelN"
+
+*Provide the below two arguments if you want to use your own trained model and you can skip providing the --labels argument*
+
+`--trained_model` : Use this argument if you want to use your trained model from the Document Classification Train Blueprint. The path to **model.pt** trained model file, this file can be downloaded from the output artifacts of the train task of the Train Blueprint.
+`--trained_classes` : Use this argument if you want to use your trained model from the Document Classification Train Blueprint. The path to **classes.json** file, this file can be downloaded from the output artifacts of the train task of the Train Blueprint.
 
 ## Input Command
 ```
