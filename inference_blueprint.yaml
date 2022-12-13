@@ -41,7 +41,8 @@ tasks:
     prep_file: '' 
     prep_function: '' 
     input_example:
-      context: text
+      context: type text to classify here
+      labels: type labels here like, label1, label2
     input_schema:
       context: text
       labels: text

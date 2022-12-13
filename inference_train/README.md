@@ -9,7 +9,7 @@ User can directly upload base64 encoded files to endpoint to recieve an output. 
 
 Input needs to be provided with key **context**
 
-### Input Command
+### Sample Input Command
 
 ```
 curl -X POST \

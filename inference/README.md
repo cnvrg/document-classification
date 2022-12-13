@@ -13,14 +13,14 @@ Input text needs to be provided with key **context** which can be a file, simple
 
 In the try live section, the first input field is for text or url and second input field is for labels which need to be provided together separated by commas.
 
-### Input Command
+### Sample Input Command
 
 curl -X POST \
     http://dcinference1-4-1.aks-cicd-Grazitti-8766.cnvrg.io/api/v1/endpoints/zavjmsjnkxsrrspnaswa \
 -H 'Cnvrg-Api-Key: eQ7sjdoFyLpCPFstmRCYsFKN' \
 -H 'Content-Type: application/json' \
 -d '{"context": "text you want to classify", "labels": ["tag1", "tag2", "tag3"]}
-### Response
+### Sample Response
 ```
 {
     "prediction":

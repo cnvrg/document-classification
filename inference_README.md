@@ -1,4 +1,4 @@
-You can deploy the Document classification model to use it via API calls. Once deployed the model will take raw text as input along with custom label names and returns for each label a probability value associated with it. This blueprint supports one click deployment. Follow the below steps to get started.
+You can deploy the Document classification model to use it via API calls. Once deployed the model will take raw text, pdf, txt, doc, docx files or a url pointing directely to a file. User can also provide a public url for a .pdf or .txt file stored in the google drive. You can provide custom label names and get for each label a probability value associated with it. This blueprint supports one click deployment. Follow the below steps to get started.
 
 1. Click on `Use Blueprint` button
 2. In the pop up, choose the relevant compute you want to use to deploy your API endpoint
