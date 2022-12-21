@@ -1,8 +1,8 @@
 ---
 title: Document Classification Batch
 version: 1.0.0
-description: "Classify text from the pdfs, .txt, .docx, .doc in the given directory"
-long_description: "Classify text from the pdfs, .txt, .docx, .doc in the given directory and store it in a csv format."
+description: "Run in batch mode a pretrained document-classifier model with input document files, which outputs a CSV with their classifications"
+long_description: "Run in batch mode a pretrained document-classifier model with input .pdf, .txt, .docx, and .doc document files, which outputs a CSV with their classifications."
 author: "cnvrg"
 author_email: "libhub@cnvrg.io"
 

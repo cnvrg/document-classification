@@ -1,8 +1,8 @@
 ---
 title: Document Classification
 version: 1.0.0
-description: "Library to deploy the Document classification."
-long_description: "Document classification capable of assigning probabilities to custom label for each document."
+description: "Classify document content using a pretrained document-classifier model and custom data"
+long_description: "Classify document content using a pretrained document-classifier model and custom data in the form of raw text along with custom label names."
 author: "cnvrg"
 author_email: "libhub@cnvrg.io"
 
