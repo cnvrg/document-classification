@@ -84,7 +84,7 @@ class setup_model:
         for textblock in process:
             if(len(textblock)) == 0:
                 continue
-            ans = self.pipe(sequences=sequences, 
+            ans = self.pipe(sequences=textblock, 
                             candidate_labels=candidate_labels, 
                             multi_label=False)
             arr += ans["scores"]
