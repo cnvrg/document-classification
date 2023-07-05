@@ -1,18 +1,58 @@
-import os
+
+from setfit import SetFitModel
+from setfit.exporters.utils import mean_pooling
+from optimum.onnxruntime import ORTModelForFeatureExtraction
+from transformers import AutoTokenizer
+from sklearn.preprocessing import LabelEncoder
+from transformers import AutoTokenizer
+
 import numpy as np
 import torch
-from transformers import DistilBertTokenizer, DistilBertModel
-import json
-from transformers import pipeline, AutoModelForSequenceClassification, AutoTokenizer
+import magic
+import pickle
+import os
+import base64
+
 import sys
 import pathlib
 sys.path.append(str(pathlib.Path(__file__).parent.resolve()))
-from breakup import breaker
-from bert_model import BERT_Arch
-from link_file import extract_data
-import base64
 from extractor import text_extraction
-import magic
+from breakup import breaker
+from link_file import extract_data
+
+
+
+
+class OnnxSetFitModel:
+    def __init__(self, ort_model, tokenizer, model_head):
+        self.ort_model = ort_model
+        self.tokenizer = tokenizer
+        self.model_head = model_head
+
+    def predict(self, inputs):
+        encoded_inputs = self.tokenizer(
+            inputs, padding=True, truncation=True, return_tensors="pt"
+        )
+        outputs = self.ort_model(**encoded_inputs)
+        embeddings = mean_pooling(
+            outputs["last_hidden_state"], encoded_inputs["attention_mask"]
+        )
+        return self.model_head.predict_proba(embeddings)
+
+    def predict_proba(self, inputs):
+        return self.predict(inputs)
+    
+    
+def load_ort_model(path):
+    ort_model = ORTModelForFeatureExtraction.from_pretrained(
+        path, file_name="model.onnx"
+    )
+    tokenizer = AutoTokenizer.from_pretrained(path)
+    modelhead = SetFitModel.from_pretrained(path).model_head
+    onnx_setfit_model = OnnxSetFitModel(ort_model, tokenizer, modelhead)
+
+    return onnx_setfit_model
+
 
 class setup_model:
     def __init__(self):
@@ -23,107 +63,73 @@ class setup_model:
         else:
             self.device = torch.device("cpu")
 
-        if os.path.exists("/input/train"):
-            model_path = "/input/train/model.pt"
-            intents_path = "/input/train/classes.json"
-            f = open(intents_path)
-            self.intents = json.load(f)
-            number_of_labels = len(self.intents)
-            # Import the DistilBert pretrained model
-            self.model = BERT_Arch(
-                DistilBertModel.from_pretrained("distilbert-base-uncased"),
-                number_of_labels,
-            )
-            self.tokenizer = DistilBertTokenizer.from_pretrained(
-                "distilbert-base-uncased"
-            )
-            self.model.load_state_dict(torch.load(model_path))
-            self.predict = self.trained_predictor
-            self.breakup = breaker("trained")
-        else:
-            os.environ["TOKENIZERS_PARALLELISM"] = "false"
-            np.set_printoptions(suppress=True)
-            nli_model = AutoModelForSequenceClassification.from_pretrained('facebook/bart-large-mnli')
-            tokenizer = AutoTokenizer.from_pretrained('facebook/bart-large-mnli')
-            if torch.cuda.is_available():
-                self.pipe = pipeline(task='zero-shot-classification', 
-                                     tokenizer=tokenizer, model=nli_model, 
-                                     device=0)
-            else:
-                self.pipe = pipeline(task='zero-shot-classification', 
-                                     tokenizer=tokenizer, model=nli_model)
-            self.predict = self.predefined_predict
-            self.breakup = breaker()
+        self.is_onnx_model = False
 
-    def predefined_predict(self, data):
-        if self.isBase64(data['context']):
-            decoded = base64.b64decode(data['context'])
-            file_ext = magic.from_buffer(decoded, mime=True).split("/")[-1]
-            savepath = f"file.{file_ext}"  # decode the input file
-            f = open(savepath, "wb")
-            f.write(decoded)
-            f.close()
-            sequences = self.extracting.master_extractor(savepath)
-            print(sequences)
-        else:
-            try:
-                print("checking")
-                sequences = extract_data(data["context"])
-            except:
-                sequences = data["context"]
-        process = self.breakup.breakup(sequences)
-        
-        candidate_labels = data["labels"]
-        arr = np.zeros((len(candidate_labels)))
+        if os.path.exists("/input/quantization"):
+
+            self.model = load_ort_model("/input/quantization")
+            pkl_file = open("/input/quantization/labelencoder.pkl", 'rb')
+            self.encoder = pickle.load(pkl_file)
+            pkl_file.close()
+            self.tokenizer = AutoTokenizer.from_pretrained("/input/quantization")
+            self.is_onnx_model = True
+
+        elif os.path.exists("/input/onnx"):
+
+            self.model = load_ort_model("/input/onnx")
+            pkl_file = open("/input/onnx/labelencoder.pkl", 'rb')
+            self.encoder = pickle.load(pkl_file)
+            pkl_file.close()
+            self.tokenizer = AutoTokenizer.from_pretrained("/input/onnx")
+            self.is_onnx_model = True
+
+        elif os.path.exists("/input/distillation"):
+            pkl_file = open("/input/distillation/labelencoder.pkl", 'rb')
+            self.encoder = pickle.load(pkl_file)
+            pkl_file.close()
+            self.model = SetFitModel.from_pretrained("/input/distillation")
+            self.tokenizer = AutoTokenizer.from_pretrained("/input/distillation")
+
+        elif os.path.exists("/input/train"):
+            pkl_file = open("/input/train/labelencoder.pkl", 'rb')
+            self.encoder = pickle.load(pkl_file)
+            pkl_file.close()
+            self.model = SetFitModel.from_pretrained("/input/train")
+            self.tokenizer = AutoTokenizer.from_pretrained("/input/train")    
+     
+        self.predict = self.trained_predictor
+        self.breakup = breaker(self.tokenizer)
+
+    def get_prediction_torch(self, text):
+        process = self.breakup.breakup(text)
+        arr = np.zeros((len(list(self.encoder.classes_))))
         total = 0
         for textblock in process:
             if(len(textblock)) == 0:
                 continue
-            ans = self.pipe(sequences=sequences, 
-                            candidate_labels=candidate_labels, 
-                            multi_label=False)
-            arr += ans["scores"]
+            preds = self.model.predict_proba([textblock])
+            arr += np.array(preds[0])
             total += 1
         arr = arr / total
         dict1 = {}
-        for prob, label in zip(arr, ans['labels']):
-            dict1[label] = str(format(prob,"f"))
-        # average score across all chunks for all labels
+        for prob, label in zip(arr, list(self.encoder.classes_)):
+            dict1[label] = str(format(prob, "f"))
         return dict1
 
-    def get_prediction(self, text):
-
-        chunks = self.breakup.breakup(text)
+    def get_prediction_onnx(self, text):
+        process = self.breakup.breakup(text)
+        arr = np.zeros((len(list(self.encoder.classes_))))
+        total = 0
+        for textblock in process:
+            if(len(textblock)) == 0:
+                continue
+            preds = self.model.predict_proba(textblock)[0]
+            arr += np.array(preds)
+            total += 1
+        arr = arr / total
         dict1 = {}
-        for chunk in chunks:
-            test_text = [chunk]
-            self.model.eval()
-
-            tokens_test_data = self.tokenizer(
-                test_text,
-                max_length=8,
-                padding="max_length",
-                truncation=True,
-                return_token_type_ids=False,
-            )
-            test_seq = torch.tensor(tokens_test_data["input_ids"])
-            test_mask = torch.tensor(tokens_test_data["attention_mask"])
-            with torch.no_grad():
-                preds = self.model(test_seq.to(self.device), test_mask.to(self.device))
-            sm = torch.nn.Softmax(dim=1)
-            probabilities = sm(preds)
-            confidence = probabilities.detach().cpu().numpy()[0]
-            
-            for prob, label in zip(confidence, self.intents):
-                try:
-                    dict1[label] += prob
-                except:
-                    dict1[label] = prob
-        
-        #average the dict1 values across all texts
-        for keys in dict1.keys():
-            dict1[keys] = str(format(dict1[keys]/len(chunks), "f"))
-
+        for prob, label in zip(arr, list(self.encoder.classes_)):
+            dict1[label] = str(format(prob, "f"))
         return dict1
 
     def trained_predictor(self, data):
@@ -142,13 +148,18 @@ class setup_model:
                 message = extract_data(data["context"])
             except:
                 message = data["context"]
-        return self.get_prediction(message)
+
+        if self.is_onnx_model:
+            return self.get_prediction_onnx(message)
+        else:
+            return self.get_prediction_torch(message)
 
     def isBase64(self, string):
         try:
             return base64.b64encode(base64.b64decode(string)).decode("utf-8") == string
         except Exception:
             return False
+
 
 predictor = setup_model()
 

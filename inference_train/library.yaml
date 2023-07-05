@@ -1,12 +1,18 @@
 ---
-title: DC Train Inference
+title: DC inference 
 version: 1.0.0
-icon: python 
+description: "Document classifier capable of returning probabilities for each each for each each document."
+icon: python
+
+author: "cnvrg"
+author_email: "libhub@cnvrg.io"
 
 tags:
   - inference
 
 kind: webservice
+
+command: python3 predict.py
 
 requirements:
   cpu: 3.5
@@ -14,21 +20,18 @@ requirements:
   gpu: 0
   hpu: 0
 
-image: cnvrg/cnvrg:v5.0
+image: python:3.8.10
 
 language: python3
 
-arguments: 
-  accept_files: false 
-  gunicorn_config:
-    - key: workers
-      value: '1'
+arguments:
+  accept_files: false
   file_name: predict.py
-  function_name: predict 
-  prep_file: '' 
+  function_name: predict
+  prep_file: ''
   prep_function: ''
   input_example:
     context: text
   input_schema:
     context: text
-  output_schema:  {}
+  output_schema: {}

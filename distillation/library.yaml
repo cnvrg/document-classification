@@ -1,0 +1,34 @@
+---
+title: DC Distillation 
+version: 1.0.0 
+icon: python
+
+tags:
+  - training
+
+command: python3 distill.py
+
+requirements:
+  cpu: 3.5
+  memory: 7.5
+  gpu: 0
+  hpu: 0
+
+image: python:3.8.10
+
+language: python3
+
+arguments:
+  - key: student_model
+    type: 'discrete'
+    values:
+      - 'sentence-transformers/paraphrase-MiniLM-L3-v2'
+  - key: teacher_model
+    type: 'discrete'
+    values:
+      - '/input/dc_train'
+  - key: train_data
+    type: 'discrete'
+    values:
+      - '/input/s3_connector/unlabelled.csv'
+  

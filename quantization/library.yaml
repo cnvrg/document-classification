@@ -1,0 +1,34 @@
+---
+title: DC Quantization 
+version: 1.0.0 
+icon: python
+
+tags:
+  - training
+
+command: python3 quant.py
+
+requirements:
+  cpu: 3.5
+  memory: 7.5
+  gpu: 0
+  hpu: 0
+
+image: python:3.8.10
+
+language: python3
+
+arguments:
+  - key: setfit_model_folder
+    type: 'discrete'
+    values:
+      - '/input/dc_distillation'
+  - key: onnx_model_folder
+    type: 'discrete'
+    values:
+      - '/input/dc_onnx'
+  - key: calibration_data
+    type: 'discrete'
+    values:
+      - '/input/s3_connector/test.csv'
+  

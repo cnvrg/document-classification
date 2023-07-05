@@ -1,12 +1,12 @@
 ---
-title: DC Train 
+title: DC Onnx 
 version: 1.0.0 
 icon: python
 
 tags:
   - training
 
-command: python3 main.py
+command: python3 conv_to_onnx.py
 
 requirements:
   cpu: 3.5
@@ -19,12 +19,9 @@ image: python:3.8.10
 language: python3
 
 arguments:
-  - key: data
+  - key: model_folder
     type: 'discrete'
     values:
-      - 'data.csv'
-  - key: epochs
-    type: 'discrete'
-    values:
-      - '200'
+      - '/input/dc_distillation'
+
   

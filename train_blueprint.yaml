@@ -1,7 +1,7 @@
 ---
-title: Document Classification Train
+title: Document Train
 version: 1.0.0
-description: Train and deploy a model that detects the intent of a text.
+description: Train, Optimize and deploy a model that detects the intent of a text.
 long_description: Train and deploy a model that detects the intent of a text based on custom training data
 
 author: "cnvrg"
@@ -11,47 +11,47 @@ tags:
   - training
 
 tasks:
-  - title: S3 Connector
-    top: 300
-    left: 200
+  # - title: S3 Connector
+  #   top: 300
+  #   left: 200
 
-    # Type must be according to the flow task conventions (data, exec, deploy)
-    type: exec
+  #   # Type must be according to the flow task conventions (data, exec, deploy)
+  #   type: exec
 
-    # The library data
-    library: s3-connector
-    library_version: 1.0.0
-    # The flattened library parameters (in this case we have training library)
-    command: python s3-connector.py
+  #   # The library data
+  #   library: s3-connector
+  #   library_version: 1.0.0
+  #   # The flattened library parameters (in this case we have training library)
+  #   command: python s3-connector.py
 
-    requirements:
-      cpu: 3.5
-      memory: 7
-      gpu: 0
-      hpu: 0
+  #   requirements:
+  #     cpu: 3.5
+  #     memory: 7
+  #     gpu: 0
+  #     hpu: 0
 
-    image: cnvrg/cnvrg:v5.0
-    language: python3
+  #   image: cnvrg/cnvrg:v5.0
+  #   language: python3
 
-    # The "arguments" property changes to "params", rest remains the same.
-    # Params in the blueprint yaml can be used to override the arguments in the library.
-    params:
-      - key: endpoint
-        type: 'categorical'
-        values:
-          - 'http://s3.amazonaws.com download'
-      - key: bucketname
-        type: 'categorical'
-        values:
-           - 'libhub-readme'
-      - key: localdir
-        type: 'categorical'
-        values:
-           - '/cnvrg'
-      - key: prefix
-        type: 'categorical'
-        values:
-          - 'dc_classification_train_data/'
+  #   # The "arguments" property changes to "params", rest remains the same.
+  #   # Params in the blueprint yaml can be used to override the arguments in the library.
+  #   params:
+  #     - key: endpoint
+  #       type: 'categorical'
+  #       values:
+  #         - 'http://s3.amazonaws.com download'
+  #     - key: bucketname
+  #       type: 'categorical'
+  #       values:
+  #          - 'libhub-readme'
+  #     - key: localdir
+  #       type: 'categorical'
+  #       values:
+  #          - '/cnvrg'
+  #     - key: prefix
+  #       type: 'categorical'
+  #       values:
+  #         - 'dc_classification_train_data/'
 
   - title: Train
     top: 300
@@ -62,7 +62,7 @@ tasks:
     library: dc-train
     library_version: 1.0.0
     
-    command: python3 train.py
+    command: python main.py
     
     requirements: 
       cpu: 3.5
@@ -70,26 +70,124 @@ tasks:
       gpu: 0
       hpu: 0
       
-    image: cnvrg/cnvrg:v5.0
+    image: python:3.8.10
     language: python3
   
     params:
-    - key: documents_dir
+    - key: train_data
       type: 'categorical'
       values: 
-        - '/input/s3_connector/dc_classification_train_data'
-    - key: labels
+        - '/data/train/train_nt.csv'
+    - key: num_iterations
+      type: 'categorical'
+      values: 
+        - '1'
+
+  - title: Distillation
+    top: 300
+    left: 400
+    
+    type: exec
+    
+    library: dc-distillation
+    library_version: 1.0.0
+    
+    command: python3 distill.py
+    
+    requirements: 
+      cpu: 3.5
+      memory: 7.5
+      gpu: 0
+      hpu: 0
+      
+    image: python:3.8.10
+    language: python3
+  
+    params:
+    - key: student_model
       type: 'discrete'
       values:
-        - '/input/s3_connector/dc_classification_train_data/labels.csv'
+        - 'sentence-transformers/paraphrase-MiniLM-L3-v2'
+    - key: teacher_model
+      type: 'discrete'
+      values:
+        - '/input/train'
+    - key: train_data
+      type: 'discrete'
+      values:
+        - '/data/unlabelled_data/unlabelled_small.csv'
+    - key: num_iterations
+      type: 'categorical'
+      values: 
+        - '1'
+
+  - title: ONNX
+    top: 300
+    left: 400
+    
+    type: exec
+    
+    library: dc-onnx
+    library_version: 1.0.0
+    
+    command: python conv_to_onnx.py
+    
+    requirements: 
+      cpu: 3.5
+      memory: 7.5
+      gpu: 0
+      hpu: 0
       
+    image: python:3.8.10
+    language: python3
+  
+    params:
+    - key: model_folder
+      type: 'discrete'
+      values:
+        - '/input/distillation'      
+
+  - title: Quantization
+    top: 300
+    left: 400
+    
+    type: exec
+    
+    library: dc-quantization
+    library_version: 1.0.0
+    
+    command: python quant.py
+    
+    requirements: 
+      cpu: 3.5
+      memory: 7.5
+      gpu: 0
+      hpu: 0
+      
+    image: python:3.8.10
+    language: python3
+  
+    params:
+    - key: setfit_model_folder
+      type: 'discrete'
+      values:
+        - '/input/distillation'
+    - key: onnx_model_folder
+      type: 'discrete'
+      values:
+        - '/input/onnx'
+    - key: calibration_data
+      type: 'discrete'
+      values:
+        - '/input/s3_connector/test.csv'   
+
   - title: Inference
     top: 400
     left: 500
     
     type: deploy
     
-    library: dc-train-inference
+    library: dc-inference
     library-version: 1.0.0
     
     kind: webservice 
@@ -100,13 +198,10 @@ tasks:
       gpu: 0
       hpu: 0
       
-    image: cnvrg/cnvrg:v5.0
+    image: python:3.8.10
     language: python3
 
     accept_files: false
-    gunicorn_config:
-      - key: workers
-        value: '1'
 
     file_name: predict.py 
     function_name: predict
@@ -120,7 +215,13 @@ tasks:
 
 
 relations:
-- from: S3 Connector
-  to: Train
+# - from: S3 Connector
+#   to: Train
 - from: Train
+  to: Distillation 
+- from: Distillation
+  to: ONNX 
+- from: ONNX
+  to: Quantization     
+- from: Quantization
   to: Inference

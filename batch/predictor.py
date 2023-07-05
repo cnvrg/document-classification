@@ -8,7 +8,6 @@ import sys
 import pathlib
 sys.path.append(str(pathlib.Path(__file__).parent.resolve()))
 from breakup import breaker
-from bert_model import BERT_Arch
 
 
 class setup_model:
@@ -18,24 +17,6 @@ class setup_model:
             self.device = torch.device("gpu")
         else:
             self.device = torch.device("cpu")
-
-        if model_path is not None:
-            f = open(classes_path)
-            self.intents = json.load(f)
-            number_of_labels = len(self.intents)
-            # Import the DistilBert pretrained model
-            self.model = BERT_Arch(
-                DistilBertModel.from_pretrained("distilbert-base-uncased"),
-                number_of_labels,
-            )
-            self.tokenizer = DistilBertTokenizer.from_pretrained(
-                "distilbert-base-uncased"
-            )
-            self.model.load_state_dict(torch.load(model_path))
-            self.predict = self.trained_predictor
-            self.breakup = breaker("trained")
-
-        else:
             os.environ["TOKENIZERS_PARALLELISM"] = "false"
             np.set_printoptions(suppress=True)
             nli_model = AutoModelForSequenceClassification.from_pretrained('facebook/bart-large-mnli')

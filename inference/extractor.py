@@ -1,5 +1,5 @@
 import os
-import PyPDF2
+import fitz
 
 os.environ["USE_TORCH"] = "1"
 import sys
@@ -67,27 +67,25 @@ class text_extraction:
     def _process_file_pdf(self, file_path):
         """
         This function extracts text from the pdf.
-
+        
         Args:
             - Filepath of the pdf.
-
+        
         Returns:
-            - A dictionary containing extracted text from pdf with keys
+            - A dictionary containing extracted text from pdf with keys 
             representing each page and values representing text from each page.
         """
-        pdfFileObj = open(file_path, "rb")
-        # The pdfReader variable is a readable object that will be parsed.
-        pdfReader = PyPDF2.PdfFileReader(pdfFileObj)
-        # Discerning the number of pages will allow us to parse through all the pages.
-        num_pages = pdfReader.numPages
-        count = 0
+        doc = fitz.open(file_path)
         output = {}
-        # The while loop will read each page.
-        while count < num_pages:
-            pageObj = pdfReader.getPage(count)
-            output[count] = pageObj.extractText()
-            count += 1
+        for i,x in enumerate(doc):
+            page = doc.load_page(i)
+            output[i]=self.cleanlines(page.get_text())
+            
         return output
+    
+    def cleanlines(self, value):
+        value = value.strip()
+        return ' '.join(value.splitlines())
 
     def extract_pdf(self, filepath):
         """

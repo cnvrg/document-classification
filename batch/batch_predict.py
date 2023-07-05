@@ -15,13 +15,6 @@ cnvrg_workdir = os.environ.get("CNVRG_WORKDIR", "/cnvrg")
 def argument_parser():
     parser = argparse.ArgumentParser(description="""Creator""")
     parser.add_argument(
-        "--trained_model",
-        action="store",
-        dest="trained_model",
-        required=False,
-        help="""path to the trained model""",
-    )
-    parser.add_argument(
         "--trained_classes",
         action="store",
         dest="trained_classes",
@@ -58,10 +51,7 @@ def validation(args):
     - An assertion error if the path provided is not a valid directory
     """
     assert os.path.exists(args.dir), " Path to the files provided does not exist "
-    if args.trained_model is not None:
-        assert os.path.exists(
-            args.trained_model
-        ), "Path provided to the trained model file does not exist"
+
     if args.trained_classes is not None:
         assert os.path.exists(
             args.trained_classes
@@ -110,14 +100,9 @@ def main():
     validation(args)
     trained = False
 
-    if args.trained_model is not None:
-        predictions = setup_model(args.trained_model, args.trained_classes)
-        trained = True
-        class_file = open(args.trained_classes)
-        label_names = json.load(class_file)
-    else:
-        predictions = setup_model()
-        label_names = args.labels.split(",")
+
+    predictions = setup_model()
+    label_names = args.labels.split(",")
     direc = args.dir
 
     # check if the path provided is a valid directory
@@ -149,16 +134,10 @@ def main():
             )
             print(traceback.format_exc())
             continue
-        if text is not None and trained == False:
+        if text is not None:
             prediction = predictions.predict(
                 {"context": text, "labels": label_names}
             )
-            mapped_values = map_dict(labels_dict, prediction)
-            to_write = to_write.append(
-                merge(meta, mapped_values), ignore_index=True
-            )
-        elif text is not None and trained == True:
-            prediction = predictions.predict({"text": text})
             mapped_values = map_dict(labels_dict, prediction)
             to_write = to_write.append(
                 merge(meta, mapped_values), ignore_index=True

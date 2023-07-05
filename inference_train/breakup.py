@@ -1,19 +1,15 @@
 import numpy as np
-from transformers import AutoTokenizer, DistilBertTokenizer
+from transformers import AutoTokenizer
 import os
 
 
 class breaker:
 
-    def __init__(self, trained=None):
+    def __init__(self,tokenizer):
         os.environ["TOKENIZERS_PARALLELISM"] = "false"
         np.set_printoptions(suppress=True)
-        if trained is None:
-            self.tokenizer = AutoTokenizer.from_pretrained('facebook/bart-large-mnli')
-            self.limit = 1024
-        else:
-            self.tokenizer = DistilBertTokenizer.from_pretrained('distilbert-base-uncased')
-            self.limit = 512
+        self.tokenizer = tokenizer
+        self.limit = list(self.tokenizer.max_model_input_sizes.values())[0]
 
     def breakup(self, input_text):
         """

@@ -75,7 +75,7 @@ tasks:
       gpu: 0
       hpu: 0
 
-    image: cnvrg/cnvrg:v5.0
+    image: python:3.8.10
     language: python3
 
     params:

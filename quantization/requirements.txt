@@ -1,6 +1,9 @@
-textract==1.6.5
-PyMuPDF==1.21.1
+datasets==2.10.1
+evaluate==0.4.0
+intel-extension-for-transformers==1.0b0
 joblib==1.2.0
+matplotlib==3.7.0
+neural-compressor==1.14.2
 nltk==3.8.1
 numpy==1.23.5
 onnx==1.13.1
@@ -11,6 +14,7 @@ optimum==1.6.4
 pandas==1.5.3
 pyaml==21.10.1
 scikit-learn==1.2.1
+seaborn==0.12.2
 sentence-transformers==2.2.2
 sentencepiece==0.1.97
 setfit==0.6.0
@@ -19,5 +23,3 @@ torch==1.13.1
 torchvision==0.14.1
 tqdm==4.64.1
 transformers==4.26.1
-python-doctr[torch]
-python-magic

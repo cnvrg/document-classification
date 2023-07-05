@@ -1,6 +1,5 @@
 import os
-import PyPDF2
-
+import fitz
 os.environ["USE_TORCH"] = "1"
 import torch
 from doctr.io import DocumentFile
@@ -9,11 +8,11 @@ import logging
 import numpy as np
 from operator import itemgetter
 import textract
-
 if torch.cuda.is_available():
     predictor = ocr_predictor(pretrained=True).cuda()
 else:
     predictor = ocr_predictor(pretrained=True)
+        
 
 
 def stitch(page):
@@ -74,18 +73,12 @@ def _process_file_pdf(file_path):
         - A dictionary containing extracted text from pdf with keys 
           representing each page and values representing text from each page.
     """
-    pdfFileObj = open(file_path, "rb")
-    # The pdfReader variable is a readable object that will be parsed.
-    pdfReader = PyPDF2.PdfFileReader(pdfFileObj)
-    # Discerning the number of pages will allow us to parse through all the pages.
-    num_pages = pdfReader.numPages
-    count = 0
+    doc = fitz.open(file_path)
     output = {}
-    # The while loop will read each page.
-    while count < num_pages:
-        pageObj = pdfReader.getPage(count)
-        output[count] = pageObj.extractText()
-        count += 1
+    for i,x in enumerate(doc):
+      page = doc.load_page(i)
+      output[i]=cleanlines(page.get_text())
+        
     return output
 
 
@@ -102,6 +95,7 @@ def extract_pdf(filepath):
         - A dictionary containing extracted text from pdf with keys 
           representing each page and values representing text from each page.
     """
+    print("calling _process_file_pdf")
     output = _process_file_pdf(filepath)
 
     todoocr = []
@@ -113,7 +107,7 @@ def extract_pdf(filepath):
     if len(todoocr) != 0:
         print("running ocr for page numbers: ", todoocr)
         output = _process_file_ocr(filepath, todoocr, output)
-
+    print("returning extracted text")
     return output
 
 
@@ -142,6 +136,10 @@ def extract_doc_docx(filepath):
     output = text.decode("utf-8") 
     return output
 
+
+def cleanlines(value):
+    value = value.strip()
+    return ' '.join(value.splitlines())
 
 def master_extractor(filepath):
     if(filepath.endswith(".pdf")):
