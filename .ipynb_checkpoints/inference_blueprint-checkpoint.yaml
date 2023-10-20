@@ -1,0 +1,51 @@
+---
+title: Document Classification
+version: 1.0.0
+description: "Library to deploy the Document classification."
+long_description: "Document classification capable of assigning probabilities to custom label for each document."
+author: "cnvrg"
+author_email: "libhub@cnvrg.io"
+
+
+tags:
+  - inference
+
+
+tasks:
+  - title: Inference
+    top: 400
+    left: 300
+
+    type: deploy
+
+    library: document-classification
+    library_version: 1.0.0
+
+    kind: webservice
+
+    requirements:
+      cpu: 3.5
+      memory: 8
+      gpu: 0
+      hpu: 0
+
+    image: cnvrg/cnvrg:v5.0
+    language: python3
+
+    accept_files: false
+    gunicorn_config:
+      - key: workers
+        value: '1'
+    file_name: predict.py 
+    function_name: predict
+    prep_file: '' 
+    prep_function: '' 
+    input_example:
+      context: type text to classify here
+      labels: type labels here like, label1, label2
+    input_schema:
+      context: text
+      labels: text
+    output_schema: {}
+      
+relations: []
