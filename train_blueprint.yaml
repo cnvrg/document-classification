@@ -1,8 +1,8 @@
 ---
 title: Document Classification Train
 version: 1.0.0
-description: Train and deploy a model that detects the intent of a text.
-long_description: Train and deploy a model that detects the intent of a text based on custom training data
+description: Train a custom model on a set of documents to classify their textual content
+long_description: Train a custom model on a set of .pdf, .txt, .docx, and .doc documents, and deploy an endpoint, which can be used to classify the textual content of document files.
 
 author: "cnvrg"
 author_email: "info@cnvrg.io"

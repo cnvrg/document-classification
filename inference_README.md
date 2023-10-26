@@ -1,11 +1,15 @@
-You can deploy the Document classification model to use it via API calls. Once deployed the model will take raw text, pdf, txt, doc, docx files or a url pointing directely to a file. User can also provide a public url for a .pdf or .txt file stored in the google drive. You can provide custom label names and get for each label a probability value associated with it. This blueprint supports one click deployment. Follow the below steps to get started.
+Use this blueprint to deploy a document-classifier model and its API endpoint. To use this pretrained document-classifier model, create a ready-to-use API-endpoint that is quickly integrated with your input data in the form of raw text along with custom label names, returning for each label an associated probability value.
 
-1. Click on `Use Blueprint` button
-2. In the pop up, choose the relevant compute you want to use to deploy your API endpoint
-3. You will be redirected to your endpoint
-4. You can now use the `Try it Live` section with any text or link. 
-5. You can now integrate your API with your code using the integration panel at the bottom of the page
-6. You will now have a functioning API endpoint that returns the probabilites for each label for the input text!
+This inference blueprint’s model was trained using [Hugging Face multi_nli datasets](https://huggingface.co/datasets/multi_nli). To use custom document data according to your specific business, run this counterpart’s [training blueprint](https://metacloud.cloud.cnvrg.io/marketplace/blueprints/document-classification-train), which trains the model and establishes an endpoint based on the newly trained model.
+
+Complete the following steps to deploy this document-classifier endpoint:
+1. Click the **Use Blueprint** button.
+2. In the dialog, select the relevant compute to deploy the API endpoint and click the **Start** button.
+3. The cnvrg software redirects to your endpoint. Complete one or both of the following options:
+   - Use the Try it Live section with any document file or link to be classified.
+   - Use the bottom integration panel to integrate your API with your code by copying in the code snippet.
+
+An API endpoint that classifies documents has now been deployed. To learn how this blueprint was created, click [here](https://github.com/cnvrg/document-classification).
 
 ## Example Input
 Text:   
@@ -16,8 +20,6 @@ Labels:
 ```
 Cooking,Dancing
 ```
-
-
 ## Example Output
 
 ```
